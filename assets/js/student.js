@@ -278,7 +278,7 @@ function renderStep2() {
       } else {
         if (stuLookupBtn) stuLookupBtn.disabled = false;
         if (quotaHintEl) {
-          quotaHintEl.textContent = `Giới hạn chống cào dữ liệu: còn ${st.remainingMinute}/${st.maxPerMinute} lượt trong phút (${st.remainingHour}/${st.maxPerHour} lượt/giờ).`;
+          quotaHintEl.textContent = '';
         }
       }
     };

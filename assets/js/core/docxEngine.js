@@ -75,7 +75,13 @@ export async function renderDocxPreview(docxBlob, containerEl) {
       inWrapper: true,
       ignoreWidth: false,
       ignoreHeight: false,
+      ignoreFonts: false,
       breakPages: true,
+      experimental: true,
+      trimXmlDeclaration: true,
+      renderHeaders: true,
+      renderFooters: true,
+      renderFootnotes: true,
       useBase64URL: true,
     });
     return true;

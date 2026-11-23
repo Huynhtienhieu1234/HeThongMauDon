@@ -3,7 +3,7 @@ import { todayISO } from '../utils/helpers.js';
 
 export const BM11_TEMPLATE_ID = 'tpl_bm11_diem_i';
 export const DEFAULT_FOLDER_ID = 'fld_dttx_2026';
-const BUILTIN_TEMPLATE_VERSION = 2; // v2: Times New Roman + thứ tự 1..8
+const BUILTIN_TEMPLATE_VERSION = 3; // v3: Xóa toàn bộ dấu chấm (...) tab leader trên 8 mẫu DOCX
 
 export const BM11_FIELDS = [
   { id: 'f_ho_ten', label: 'Họ và tên sinh viên', varName: 'ho_ten', type: 'text', required: true, defaultValue: '', hint: 'Nhập đầy đủ họ tên có dấu (VD: Nguyễn Văn An)' },

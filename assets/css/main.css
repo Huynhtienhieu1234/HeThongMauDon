@@ -475,20 +475,25 @@ textarea { resize: vertical; min-height: 84px; }
   border-radius: var(--radius-sm);
 }
 
-table {
+.table-wrap table,
+.subtable-wrap table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
 
-th, td {
+.table-wrap th,
+.table-wrap td,
+.subtable-wrap th,
+.subtable-wrap td {
   padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 
-th {
+.table-wrap th,
+.subtable-wrap th {
   background: var(--surface-alt);
   font-weight: 700;
   color: var(--text-muted);
@@ -497,8 +502,9 @@ th {
   letter-spacing: 0.02em;
 }
 
-tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: var(--surface-alt); }
+.table-wrap tr:last-child td,
+.subtable-wrap tr:last-child td { border-bottom: none; }
+.table-wrap tbody tr:hover { background: var(--surface-alt); }
 
 /* Badges & Alerts */
 .badge {
@@ -580,16 +586,33 @@ tbody tr:hover { background: var(--surface-alt); }
   overflow-x: auto;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .preview-stage .docx-wrapper {
   background: transparent !important;
   padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .preview-stage .docx-wrapper > section.docx {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-family: 'Times New Roman', Times, serif !important;
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.22) !important;
   margin-bottom: 16px !important;
+  box-sizing: border-box !important;
+}
+
+.preview-stage .docx-wrapper table {
+  border-collapse: collapse;
+}
+
+.preview-stage .docx-wrapper td,
+.preview-stage .docx-wrapper th {
+  background: transparent;
 }
 
 /* Dynamic Subtable inside Generator */
