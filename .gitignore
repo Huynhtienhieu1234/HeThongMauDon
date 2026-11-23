@@ -1,0 +1,6 @@
+# Không đẩy dữ liệu sinh viên gốc (chưa mã hóa) lên GitHub công khai
+DB/DS SV.xls
+DB/*.xls
+DB/*.xlsx
+DB/students.json
+BIEU MAU SU DUNG SV_2026/
