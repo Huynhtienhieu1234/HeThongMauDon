@@ -5,7 +5,7 @@ import { seedSampleBM11IfNeeded, BM11_TEMPLATE_ID } from './core/seed.js';
 import {
   applyStudentToForm,
   ensureStudentDbLoaded,
-  findStudentByMssv,
+  findStudentByMssvAndDob,
 } from './core/studentService.js';
 import {
   consumeRateLimit,
@@ -171,10 +171,11 @@ function renderStep2() {
       </div>
 
       <div class="student-lookup-bar">
-        <strong>🔎 Nhập Mã số sinh viên để tự động điền thông tin của bạn</strong>
+        <strong>🔐 Xác thực Sinh viên (MSSV + Ngày sinh) để tự động điền thông tin</strong>
         <div class="student-lookup-row">
-          <input type="text" id="stuMssvLookupInput" value="${escapeHtml(state.formData.mssv || '')}" placeholder="Nhập đúng MSSV của bạn rồi bấm Tra cứu..." autocomplete="off" />
-          <button type="button" class="btn btn-primary btn-sm" id="stuMssvLookupBtn">🔍 Tra cứu &amp; Tự động điền</button>
+          <input type="text" id="stuMssvLookupInput" value="${escapeHtml(state.formData.mssv || '')}" placeholder="Nhập Mã số sinh viên..." autocomplete="off" />
+          <input type="date" id="stuDobLookupInput" value="${escapeHtml(state.lookupDob || '')}" title="Chọn ngày sinh của bạn" style="max-width:190px;" />
+          <button type="button" class="btn btn-primary btn-sm" id="stuMssvLookupBtn">🔍 Xác thực &amp; Điền tự động</button>
         </div>
         <div id="stuQuotaHint" class="form-hint" style="margin-top:6px;"></div>
         <div id="stuStudentCardSlot"></div>
@@ -245,6 +246,7 @@ function renderStep2() {
   // Submit form -> Generate DOCX -> Step 3
   const form = container.querySelector('#studentDocForm');
   const stuLookupInput = container.querySelector('#stuMssvLookupInput');
+  const stuDobInput = container.querySelector('#stuDobLookupInput');
   const stuLookupBtn = container.querySelector('#stuMssvLookupBtn');
   const quotaHintEl = container.querySelector('#stuQuotaHint');
   const slot = container.querySelector('#stuStudentCardSlot');
@@ -282,68 +284,70 @@ function renderStep2() {
     };
     refreshQuotaUI();
 
-    const runStuMssvLookup = async (rawCode) => {
-      const code = String(rawCode || '').trim();
+    const runStuMssvLookup = async () => {
+      const code = String(stuLookupInput?.value || '').trim();
+      const dob = String(stuDobInput?.value || '').trim();
+      state.lookupDob = dob;
+
       if (!code) {
-        if (slot) slot.innerHTML = '';
-        state.matchedStudent = null;
-        showToast('Vui lòng nhập Mã số sinh viên trước khi tra cứu.', 'warning');
+        showToast('Vui lòng nhập Mã số sinh viên.', 'warning');
+        stuLookupInput?.focus();
         return;
       }
-          if (code.length < 6) {
-            showToast('Mã số sinh viên không hợp lệ (quá ngắn).', 'warning');
-            return;
-          }
+      if (code.length < 6) {
+        showToast('Mã số sinh viên không hợp lệ.', 'warning');
+        stuLookupInput?.focus();
+        return;
+      }
+      if (!dob) {
+        showToast('Vui lòng chọn Ngày sinh để xác thực đúng chủ hồ sơ.', 'warning');
+        stuDobInput?.focus();
+        return;
+      }
 
-          try {
-            if (stuLookupBtn) {
-              stuLookupBtn.disabled = true;
-              stuLookupBtn.textContent = '⏳ Đang tra cứu...';
-            }
-            const stu = await findStudentByMssv(code);
-            if (stu) {
-              state.matchedStudent = stu;
-              applyStudentToForm(form, stu);
-              if (stuLookupInput && stuLookupInput.value.trim() !== stu.mssv) stuLookupInput.value = stu.mssv;
-              if (slot) slot.innerHTML = '';
-              showToast(`Xin chào ${stu.ho_ten}! Đã tự động điền thông tin.`, 'success', 2500);
-            } else {
-              state.matchedStudent = null;
-              if (slot) {
-                slot.innerHTML = `<div class="alert alert-warning" style="margin-top:10px;margin-bottom:0;">Không tìm thấy MSSV <strong>${escapeHtml(code)}</strong>. Bạn vui lòng kiểm tra lại hoặc tự nhập thông tin bên dưới.</div>`;
-              }
-            }
-          } catch (err) {
-            if (err.rateLimited) {
-              showToast(err.message, 'error', 4500);
-              if (slot) {
-                slot.innerHTML = `<div class="alert alert-warning" style="margin-top:10px;margin-bottom:0;">⛔ ${escapeHtml(err.message)}</div>`;
-              }
-            } else {
-              showToast(`Lỗi tra cứu: ${err.message}`, 'error');
-            }
-          } finally {
-            if (stuLookupBtn) stuLookupBtn.textContent = '🔍 Tra cứu & Tự động điền';
-            refreshQuotaUI();
+      try {
+        if (stuLookupBtn) {
+          stuLookupBtn.disabled = true;
+          stuLookupBtn.textContent = '⏳ Đang xác thực...';
+        }
+        const stu = await findStudentByMssvAndDob(code, dob);
+        if (stu) {
+          state.matchedStudent = stu;
+          applyStudentToForm(form, stu);
+          if (stuLookupInput && stuLookupInput.value.trim() !== stu.mssv) stuLookupInput.value = stu.mssv;
+          if (slot) slot.innerHTML = '';
+          showToast(`Xác thực thành công: ${stu.ho_ten}! Đã tự động điền thông tin.`, 'success', 2800);
+        } else {
+          state.matchedStudent = null;
+          if (slot) {
+            slot.innerHTML = `<div class="alert alert-warning" style="margin-top:10px;margin-bottom:0;">Không khớp <strong>MSSV</strong> và <strong>Ngày sinh</strong>. Vui lòng kiểm tra lại hoặc tự nhập thông tin bên dưới.</div>`;
           }
-        };
-
-        // Chỉ tra cứu khi bấm nút hoặc nhấn Enter (tránh trừ lượt oan và ngăn dò từng ký tự)
-        stuLookupBtn?.addEventListener('click', () => runStuMssvLookup(stuLookupInput?.value));
-        stuLookupInput?.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            runStuMssvLookup(stuLookupInput.value);
+        }
+      } catch (err) {
+        if (err.rateLimited) {
+          showToast(err.message, 'error', 4500);
+          if (slot) {
+            slot.innerHTML = `<div class="alert alert-warning" style="margin-top:10px;margin-bottom:0;">⛔ ${escapeHtml(err.message)}</div>`;
           }
-        });
+        } else {
+          showToast(`Lỗi tra cứu: ${err.message}`, 'error');
+        }
+      } finally {
+        if (stuLookupBtn) stuLookupBtn.textContent = '🔍 Xác thực & Điền tự động';
+        refreshQuotaUI();
+      }
+    };
 
-        const stuFormMssv = form?.querySelector('[name="mssv"], [name="ma_sv"], [name="ma_sinh_vien"]');
-          stuFormMssv?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              runStuMssvLookup(stuFormMssv.value);
-            }
-          });
+    // Chỉ tra cứu khi bấm nút hoặc nhấn Enter (tránh trừ lượt oan và ngăn dò ký tự)
+    stuLookupBtn?.addEventListener('click', runStuMssvLookup);
+    [stuLookupInput, stuDobInput].forEach((inp) => {
+      inp?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          runStuMssvLookup();
+        }
+      });
+    });
 
           form?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -393,6 +397,22 @@ function renderStep2() {
                   el?.focus();
                   return;
                 }
+                if (val && f.varName === 'dien_thoai') {
+                  const digits = val.replace(/[\s.\-()]/g, '');
+                  if (!/^0\d{9}$/.test(digits)) {
+                    showToast('Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.', 'error');
+                    el?.focus();
+                    return;
+                  }
+                }
+                if (val && f.varName === 'so_cccd') {
+                  const digits = val.replace(/\s+/g, '');
+                  if (!/^\d{12}$/.test(digits)) {
+                    showToast('Số CCCD phải gồm đúng 12 chữ số.', 'error');
+                    el?.focus();
+                    return;
+                  }
+                }
                 rawData[f.varName] = val;
                 if (f.type === 'date') {
                   renderData[f.varName] = formatDateValue(val, settings.dateFormat);
@@ -425,24 +445,7 @@ function renderStep2() {
               state.generatedBlob = blob;
               state.outputFileName = outName;
 
-              // Lưu lịch sử nhẹ trên trình duyệt
-              try {
-                const now = new Date().toISOString();
-                await db.put('history', {
-                  id: uid('his'),
-                  docName: outName,
-                  templateId: tpl.id,
-                  templateName: tpl.name,
-                  inputData: rawData,
-                  status: 'Thành công (Cổng SV)',
-                  fileBlob: blob,
-                  size: blob.size,
-                  createdAt: now,
-                });
-              } catch {
-                // Bỏ qua nếu trình duyệt chặn ghi
-              }
-
+              // Bảo mật máy dùng chung: KHÔNG lưu dữ liệu cá nhân (CCCD, SĐT, Email) vào IndexedDB
               showToast('Đã tạo xong văn bản! Hãy kiểm tra lại trước khi tải xuống.', 'success');
               renderStep3();
             } catch (err) {
@@ -634,7 +637,10 @@ async function bootstrapStudent() {
 
             try {
               await openDB();
-              ensureStudentDbLoaded(); // Tải nền DB sinh viên (26.039 hồ sơ)
+              // Dọn sạch dữ liệu cá nhân cũ (nếu có) khỏi IndexedDB trên máy dùng chung
+              db.clear('history').catch(() => {});
+              db.clear('studentDb').catch(() => {});
+              ensureStudentDbLoaded();
               await seedSampleBM11IfNeeded(false);
               await loadTemplates();
 
