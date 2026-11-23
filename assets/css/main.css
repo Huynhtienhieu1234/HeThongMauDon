@@ -39,8 +39,12 @@
   --danger-bg: rgba(220, 38, 38, 0.18);
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
+}
+
+body,
+:where(h1, h2, h3, h4, h5, h6, p, ul, ol, li, figure):not(.docx-wrapper *) {
   margin: 0;
   padding: 0;
 }
@@ -595,6 +599,8 @@ textarea { resize: vertical; min-height: 84px; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  line-height: normal;
+  font-size: initial;
 }
 
 .preview-stage .docx-wrapper > section.docx {
@@ -604,6 +610,10 @@ textarea { resize: vertical; min-height: 84px; }
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.22) !important;
   margin-bottom: 16px !important;
   box-sizing: border-box !important;
+}
+
+.preview-stage .docx-wrapper p {
+  white-space: pre-wrap;
 }
 
 .preview-stage .docx-wrapper table {
