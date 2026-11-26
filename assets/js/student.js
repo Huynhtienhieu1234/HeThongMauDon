@@ -113,11 +113,8 @@ function renderStep1() {
                   </div>
                 </div>
                 <div class="tpl-card-footer">
-                  <span class="badge badge-primary">${escapeHtml(folderMap.get(t.folderId) || 'Biểu mẫu')}</span>
-                  <div class="btn-group">
-                    <button class="btn btn-sm js-dl-blank" data-id="${escapeHtml(t.id)}" title="Tải mẫu trống về máy không cần điền">⬇️ Tải mẫu</button>
-                    <button class="btn btn-primary btn-sm js-pick-tpl" data-id="${escapeHtml(t.id)}">Điền đơn →</button>
-                  </div>
+                  <button class="btn btn-sm js-dl-blank" data-id="${escapeHtml(t.id)}" title="Tải mẫu trống về máy không cần điền">⬇️ Tải mẫu</button>
+                  <button class="btn btn-primary btn-sm js-pick-tpl" data-id="${escapeHtml(t.id)}">Điền đơn →</button>
                 </div>
               </div>`
         )
