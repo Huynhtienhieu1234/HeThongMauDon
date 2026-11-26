@@ -114,7 +114,10 @@ function renderStep1() {
                 </div>
                 <div class="tpl-card-footer">
                   <span class="badge badge-primary">${escapeHtml(folderMap.get(t.folderId) || 'Biểu mẫu')}</span>
-                  <button class="btn btn-primary btn-sm js-pick-tpl" data-id="${escapeHtml(t.id)}">Điền đơn →</button>
+                  <div class="btn-group">
+                    <button class="btn btn-sm js-dl-blank" data-id="${escapeHtml(t.id)}" title="Tải mẫu trống về máy không cần điền">⬇️ Tải mẫu</button>
+                    <button class="btn btn-primary btn-sm js-pick-tpl" data-id="${escapeHtml(t.id)}">Điền đơn →</button>
+                  </div>
                 </div>
               </div>`
         )
@@ -140,6 +143,27 @@ function renderStep1() {
       state.activeTemplate = tpl;
       state.formData = {};
       renderStep2();
+    });
+  });
+
+  container.querySelectorAll('.js-dl-blank').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const tpl = state.templates.find((t) => t.id === btn.dataset.id);
+      if (!tpl) return;
+      const blankUrl = tpl.blankFile || `./templates_blank/${tpl.originalFileName}`;
+      try {
+        btn.disabled = true;
+        const resp = await fetch(blankUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        const fileName = `${slugifyFilename(tpl.name)}_mau_trong.docx`;
+        downloadBlob(blob, fileName);
+        showToast(`Đang tải mẫu trống "${tpl.name}"...`, 'success');
+      } catch (err) {
+        showToast(`Không thể tải mẫu trống: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
     });
   });
 }
